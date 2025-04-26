@@ -22,8 +22,8 @@ void setup() {
 }
 void actions (bool con1,bool con2,bool con3,bool con4, int delay_in_ms=3000){
   
-  analogWrite(9, 100); //ENA  pin
-  analogWrite(10, 100); //ENB pin
+  analogWrite(9, 255); //ENA  pin
+  analogWrite(10, 255); //ENB pin
   
   digitalWrite(output1, con1);
   digitalWrite(output2, con2);
@@ -47,7 +47,7 @@ void  loop() {
     actions(false,true,false,true);
   }else if(keys=="q" || keys=="q"){
     actions(false,false,false,false);
-  }else{
+  }else{  
     Serial.write("Error : Expected (f,b,r,l or F,B,R,L) ");
   }
 

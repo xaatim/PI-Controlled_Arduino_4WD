@@ -1,20 +1,22 @@
-import serial
-import time
+def main():
+    from keyboard_controller import KeyboardController
+    import serial
+    from gamepad_controller import GamePadController
+    import threading
 
-arduino = serial.Serial(port='COM4',   baudrate=115200, timeout=.1)
+    arduino = serial.Serial(port='COM4', baudrate=115200, timeout=.1)
 
-def controller(keys:str):
-    arduino.write(bytes(keys,   'utf-8'))
-    time.sleep(0.05)
+
+    keyboard_thread = threading.Thread(target=KeyboardController,args=(arduino,))
+    gamepad_thread = threading.Thread(target=GamePadController,args=(arduino,))
+
+    keyboard_thread.start()
+    gamepad_thread.start()
+
+    keyboard_thread.join()
+    gamepad_thread.join()
+
+    arduino.close()
     
-    
-try:
-    while True:
-        keys = input("Enter a number: ")
-        controller(keys)
-        result = arduino.readline()
-        print(result)
-        
-except:
-    KeyboardInterrupt
-    arduino.write(bytes('q',   'utf-8'))
+
+main()
