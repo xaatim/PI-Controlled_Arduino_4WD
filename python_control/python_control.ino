@@ -1,54 +1,47 @@
-String keys;
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
-int output1 = 2;
-int output2 = 3;
-int output3 = 12;
-int  output4 = 11;
+LiquidCrystal_I2C lcd(0x27, 16, 2); // LCD address and size
+
+const int vinPin = A0;
+const int voutPin = A1;
+
+// Resistors
+const float R1 = 4000.0;  // First resistor (ohms)
+const float R2 = 2000.0;   // R2 for voltage divider (Vout = Vin * R2/(R1+R2))
+const float R3 = 2000.0;   // R3 for current calculation (I = Vin / (R1 + R3))
 
 void setup() {
-
-  Serial.begin(115200);
-  Serial.setTimeout(1);
-
-  pinMode(output1, OUTPUT);
-  pinMode(output2, OUTPUT);
-  pinMode(output3,  OUTPUT);
-  pinMode(output4, OUTPUT);
-
-
-  pinMode(9,  OUTPUT); 
-  pinMode(10, OUTPUT);
-
+  lcd.init();      // Initialize LCD
+  lcd.backlight(); // Turn on backlight
+  Serial.begin(9600);
 }
-void actions (bool con1,bool con2,bool con3,bool con4, int delay_in_ms=3000){
-  
-  analogWrite(9, 255); //ENA  pin
-  analogWrite(10, 255); //ENB pin
-  
-  digitalWrite(output1, con1);
-  digitalWrite(output2, con2);
 
-  digitalWrite(output3, con3);
-  digitalWrite(output4, con4);
-  // delay(delay_in_ms);
+void loop() {
+  float vin_meas = analogRead(vinPin) * (5.0 / 1023.0);
+  float vout_meas = analogRead(voutPin) * (5.0 / 1023.0);
 
-  
-}
-void  loop() {
-  while (!Serial.available());
-  keys = Serial.readString();
-  if(keys=="f" || keys=="F"){
-    actions(true,false,false,true);
-  }else if (keys=="b" || keys=="B"){
-    actions(false,true,true,false);
-  }else if(keys=="r" || keys=="R"){
-    actions(true,false,true,false);
-  }else if(keys=="l" || keys=="L"){
-    actions(false,true,false,true);
-  }else if(keys=="q" || keys=="q"){
-    actions(false,false,false,false);
-  }else{  
-    Serial.write("Error : Expected (f,b,r,l or F,B,R,L) ");
-  }
+  // Voltage divider formula: Vout = Vin * (R2 / (R1 + R2))
+  float vout_calc = vin_meas * (R2 / (R1 + R2));
 
+  // Current calculation: I = Vin / (R1 + R3)
+  float current = vin_meas / (R1 + R3);      // Current in Amps
+  float current_mA = current * 1000.0;       // Convert to milliamps
+
+  // Serial Monitor Output
+  Serial.print("Vin: "); Serial.print(vin_meas, 2); Serial.print(" V | ");
+  Serial.print("Vout (calc): "); Serial.print(vout_calc, 2); Serial.print(" V | ");
+  Serial.print("Vout (meas): "); Serial.print(vout_meas, 2); Serial.print(" V | ");
+  Serial.print("Current: "); Serial.print(current_mA, 2); Serial.println(" mA");
+
+  // LCD Output
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Vin:"); lcd.print(vin_meas, 2); lcd.print("V");
+
+  lcd.setCursor(0, 1);
+  lcd.print("I:"); lcd.print(current_mA, 2); lcd.print("mA ");
+  lcd.print("Vo:"); lcd.print(vout_calc, 2); lcd.print("V");
+
+  delay(1000);
 }
